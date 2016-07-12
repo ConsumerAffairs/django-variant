@@ -20,6 +20,7 @@ class GetExperimentVariantTest(TestCase):
         self.request = RequestFactory()
         self.request.variant_experiments = {}
         self.request.COOKIES = {}
+        self.request.GET = {}
         self.choose_variant_patcher = mock.patch(
             'variant.models.Experiment.choose_variant')
         self.get_variants_patcher = mock.patch(
@@ -101,6 +102,40 @@ class GetExperimentVariantTest(TestCase):
         self.mock_get_cookie_name.assert_called_once_with('test_experiment')
         self.mock_get_variants.assert_called_once_with()
         self.mock_choose_variant.assert_called_once_with()
+        self.assertEqual(variant, 'variant A')
+        self.assertEqual(
+            self.request.variant_experiments['test_experiment'], 'variant A')
+
+    def test_cookie_set_get_param(self):
+        self.request.COOKIES['dvc_test_experiment'] = 'variant A'
+        self.request.GET['dvc_test_experiment'] = 'forced variant'
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_get_variants.return_value = [
+            'variant A', 'variant B', 'forced variant']
+
+        with self.settings(VARIANT_SETTINGS={'EXPERIMENT_COOKIE': 'dvc_{}'}):
+            variant = utils.get_experiment_variant(
+                self.request, 'test_experiment')
+
+        self.mock_get_cookie_name.assert_called_once_with('test_experiment')
+        self.mock_get_variants.assert_called_once_with()
+        self.assertEqual(variant, 'forced variant')
+        self.assertEqual(
+            self.request.variant_experiments['test_experiment'],
+            'forced variant')
+
+    def test_cookie_set_get_param_invalid(self):
+        self.request.COOKIES['dvc_test_experiment'] = 'variant A'
+        self.request.GET['dvc_test_experiment'] = 'forced variant'
+        self.mock_get_cookie_name.return_value = 'dvc_test_experiment'
+        self.mock_get_variants.return_value = ['variant A', 'variant B']
+
+        with self.settings(VARIANT_SETTINGS={'EXPERIMENT_COOKIE': 'dvc_{}'}):
+            variant = utils.get_experiment_variant(
+                self.request, 'test_experiment')
+
+        self.mock_get_cookie_name.assert_called_once_with('test_experiment')
+        self.mock_get_variants.assert_called_once_with()
         self.assertEqual(variant, 'variant A')
         self.assertEqual(
             self.request.variant_experiments['test_experiment'], 'variant A')

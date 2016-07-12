@@ -32,8 +32,13 @@ def get_experiment_variant(request, experiment_name, make_decision=True):
     if experiment:
         cookie_name = get_experiment_cookie_name(experiment_name)
         variant = request.COOKIES.get(cookie_name, None)
+        experiment_variants = experiment.get_variants()
 
-        if not variant or variant not in experiment.get_variants():
+        force_variant = request.GET.get(cookie_name)
+        if force_variant and force_variant in experiment_variants:
+            variant = force_variant
+
+        if not variant or variant not in experiment_variants:
             variant = experiment.choose_variant()
 
     request.variant_experiments[experiment_name] = variant
