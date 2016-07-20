@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
     name='django-variant',
-    version='0.1.2',
+    version='0.1.3',
     description='Django variant testing framework',
     author='Jeremy Sattefield',
     author_email='jsatt@jsatt.com',
     url='https://github.com/jsatt/django-variant',
-    packages=[
-        'variant', 'variant.migrations'],
+    packages=find_packages(exclude=('tests*', 'test_app')),
     install_requires=[
         'Django>=1.5', 'six'],
     classifiers=[
